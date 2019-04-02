@@ -1,0 +1,103 @@
+<html>
+
+<head>
+        <script src="page.js"></script>
+        <link href="page.css" rel="stylesheet">
+    <script>
+        var socket;
+        function init() {
+            socket = new WebSocket("ws://localhost:9095");
+            socket.addEventListener("message", f1);
+        }
+        function sendTrial() {
+            socket.send("Am Connected ?");
+        }
+        function f1(e) {
+            alert(e.data);
+            var serverdataStr = e.data;
+            var serverDataObj = JSON.parse(serverdataStr);
+            if (serverDataObj.currentusers) {
+                var options = document.querySelector("select").children;
+                console.log("options: " + options.length);
+                for (i = options.length - 1; i >= 0; i--) {
+                    document.querySelector("select").removeChild(options[i]);
+                }
+                options = document.querySelector("select").children;
+                console.log("options: " + options.length);
+                alert(serverDataObj.currentusers.length);
+                for (i = 0; i < serverDataObj.currentusers.length; i++) {
+                    var optionElement = document.createElement("option");
+                    var textNode = document.createTextNode(serverDataObj.currentusers[i]);
+                    optionElement.appendChild(textNode);
+                    document.querySelector("select").appendChild(optionElement);
+
+                }
+            }
+
+            if (serverDataObj.nick) {
+                var nickname = serverDataObj.nick;
+                var txtMessage = serverDataObj.replymsg;
+                var displayOutput = nickname + " : " + txtMessage;
+                document.querySelector("textarea").value+= displayOutput + "\n";
+            }
+        }
+
+        function f2() {
+            var nickname = document.forms[0].elements[0].value;
+            var loginObj = new ChatUser(nickname);
+            var loginStr = JSON.stringify(loginObj);
+            loginStr = "join:" + loginStr;
+            document.querySelector("#nickLabel").innerText = nickname;
+            socket.send(loginStr);
+
+        }
+
+
+        function f3() {
+            var userName = document.querySelector("#nickLabel").innerText;
+            var usermsg = document.querySelector("#txtmsg1").value;
+            alert(userName+usermsg)
+            var chatmsg = new ChatMessage(userName, usermsg);
+            var chatMsgStr = "Chat:" + JSON.stringify(chatmsg);
+            alert(chatMsgStr)
+            socket.send(chatMsgStr);
+            var usermsg = document.querySelector("#txtmsg").value=""
+        }
+
+    </script>
+    
+</head>
+
+<body onload="init()">
+    <div id="nickNamePanel">
+        <form>
+            <label>Nick Name</label>
+            <input id="txtmsg">
+            <button type="button" onclick="f2()">Enter Chat</button>
+        </form>
+    </div>
+
+    <div id="chatPanel">
+        <table style="width:100%">
+            <tr id="firstRow">
+                <td><textarea style="height:10cm; width:100%; border:solid"></textarea></td>
+                <td style="width:4cm; height:10cm; border:solid">
+                    <select multiple>
+                        <option>User 1</option>
+                        <option>User 2</option>
+                    </select>
+                </td>
+            </tr>
+            <tr id="secondRow">
+                <td colspan="2">
+                    <label id="nickLabel">nickname</label>
+                    <input type='text' id="txtmsg1">
+                    <button type='button' onclick="f3()">SEND</button>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</body>
+
+</html>
